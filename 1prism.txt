@@ -1,36 +1,23 @@
+https://github.com/fastapi/full-stack-fastapi-template
+
+
+cd D:\project1\prism
+https://github.com/fastapi/fastapi
+
+
 import os
-
-from html import escape
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from fastapi.responses import HTMLResponse, FileResponse
-import os
-
-
-from fastapi import FastAPI, UploadFile, File, Request, Form
+from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer
-)
-
-from reportlab.lib.styles import (
-    getSampleStyleSheet,
-    ParagraphStyle
-)
-
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
 
 from api.core.parse import parse_document
 from api.core.pulse import PULSE
 from api.core.state import create_run, get_run
+from api.core.atlas import ATLAS
 from api.core.weaver import WEAVER
 
 
@@ -48,30 +35,25 @@ templates = Jinja2Templates(directory="api/templates")
 
 
 # --------------------------------------------------
-# HOME PAGE
+# HOME
 # --------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 # --------------------------------------------------
-# HEALTH CHECK
+# HEALTH
 # --------------------------------------------------
 
 @app.get("/health")
 def health():
-
     return {"status": "ok"}
 
 
 # --------------------------------------------------
-# FILE UPLOAD
+# UPLOAD (optional)
 # --------------------------------------------------
 
 @app.post("/upload")
@@ -91,7 +73,7 @@ async def upload_file(file: UploadFile = File(...)):
 
 
 # --------------------------------------------------
-# SIREN ALERT CHECK
+# SIREN ALERT
 # --------------------------------------------------
 
 def siren_check(judge_output):
@@ -99,9 +81,7 @@ def siren_check(judge_output):
     alerts = []
 
     for item in judge_output:
-
         if item["risk"] == "high":
-
             alerts.append({
                 "feature": item["feature_name"],
                 "severity": "critical",
@@ -112,51 +92,24 @@ def siren_check(judge_output):
 
 
 # --------------------------------------------------
-# ANALYZE ENDPOINT
+# ANALYZE
 # --------------------------------------------------
 
 @app.post("/analyze", response_class=HTMLResponse)
-async def analyze(
-    request: Request,
-    file: UploadFile = File(...),
-    repo_url: str = Form(""),
-    instruction: str = Form("")
-):
+async def analyze(request: Request, file: UploadFile = File(...)):
 
     try:
 
-        # -------------------------
         # SAVE FILE
-        # -------------------------
-
         content = await file.read()
 
         with open(file.filename, "wb") as f:
             f.write(content)
 
-        # -------------------------
-        # PARSE DOCUMENT
-        # -------------------------
-
+        # PARSE
         parsed = parse_document(file.filename)
 
-        # -------------------------
-        # SIMPLE REPO CONTEXT
-        # -------------------------
-
-        repo_context = None
-
-        if repo_url:
-
-            repo_context = {
-                "repo_url": repo_url,
-                "status": "GitHub URL received"
-            }
-
-        # -------------------------
-        # RUN AI PIPELINE
-        # -------------------------
-
+        # AI PIPELINE
         pulse = PULSE()
 
         run_id = await create_run(parsed)
@@ -164,73 +117,55 @@ async def analyze(
         result = await pulse.run(parsed)
 
         radar_output = result["radar"]
-
         judge_output = result["judge"]
-
-        # -------------------------
-        # SIREN ALERTS
-        # -------------------------
 
         alerts = siren_check(judge_output)
 
-        # -------------------------
-        # BUILD FINAL REPORT
-        # -------------------------
-
         weaver = WEAVER()
 
-        report = weaver.build_report(
-            parsed,
-            radar_output,
-            judge_output
-        )
+        report = weaver.build_report(parsed, radar_output, judge_output)
 
-        # -------------------------
-        # SAVE REPORT
-        # -------------------------
-
+        # SAVE REPORT TEMP (used for PDF)
         txt_file = f"{run_id}.txt"
 
         with open(txt_file, "w", encoding="utf-8") as f:
             f.write(report)
 
-        # -------------------------
-        # RETURN REPORT PAGE
-        # -------------------------
-
         return templates.TemplateResponse(
-    "report.html",
-    {
-        "request": request,
-        "parsed": parsed,
-        "radar": radar_output,
-        "judge": judge_output,
-        "report": report,
-        "alerts": alerts,
-        "run_id": run_id,
-        "repo": repo_context,
-        "instruction": instruction,
+            "report.html",
+            {
+                "request": request,
+                "parsed": parsed,
+                "radar": radar_output,
+                "judge": judge_output,
+                "report": report,
+                "alerts": alerts,
+                "run_id": run_id
+            }
+        )
 
-        # PIE CHART VALUES
-        "low_risk": len([x for x in judge_output if x["risk"] == "low"]),
-        "medium_risk": len([x for x in judge_output if x["risk"] == "medium"]),
-        "high_risk": len([x for x in judge_output if x["risk"] == "high"]),
-    }
-)
     except Exception as e:
-
         print("ANALYZE ERROR:", e)
 
         return HTMLResponse(
             content=f"<h1>PRISM ERROR</h1><p>{str(e)}</p>",
-            status_code=500  )
+            status_code=500
+        )
 
 
 # --------------------------------------------------
-# PDF DOWNLOAD
+# PDF DOWNLOAD (FINAL FIX)
 # --------------------------------------------------
+
 @app.get("/pdf/{run_id}")
 async def download_pdf(run_id: str):
+
+    import os
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+
     txt_file = f"{run_id}.txt"
     pdf_file = f"{run_id}.pdf"
 
@@ -240,15 +175,17 @@ async def download_pdf(run_id: str):
     with open(txt_file, "r", encoding="utf-8") as f:
         content = f.readlines()
 
+    # PDF setup
     pdf = SimpleDocTemplate(pdf_file, pagesize=A4)
     styles = getSampleStyleSheet()
 
+    # Custom styles
     title_style = ParagraphStyle(
         "TitleStyle",
         parent=styles["Title"],
-        fontSize=24,
+        fontSize=22,
         textColor=colors.darkblue,
-        alignment=1,
+        alignment=1,  # center
         spaceAfter=20
     )
 
@@ -260,26 +197,46 @@ async def download_pdf(run_id: str):
     )
 
     normal_style = styles["Normal"]
+
     story = []
 
-    story.append(Paragraph("PRISM AI REPORT", title_style))
+    # --------------------------
+    # TITLE PAGE
+    # --------------------------
+    story.append(Paragraph("🚀 PRISM AI REPORT", title_style))
+    story.append(Paragraph(f"Run ID: {run_id}", normal_style))
     story.append(Spacer(1, 20))
 
+    # --------------------------
+    # CONTENT
+    # --------------------------
+    story.append(Paragraph("📊 Analysis Report", heading_style))
+    story.append(Spacer(1, 10))
+
     for line in content:
+
         line = line.strip()
+
         if not line:
             continue
 
-        plain = escape(line)
-
+        # Detect headings
         if line.startswith("#"):
-            clean = escape(line.replace("#", "").strip())
-            story.append(Paragraph(clean, heading_style))
+            clean_line = line.replace("#", "").strip()
+            story.append(Spacer(1, 10))
+            story.append(Paragraph(f"<b>{clean_line}</b>", heading_style))
+
+        # Bullet points
+        elif line.startswith("-"):
+            story.append(Paragraph(f"• {line[1:].strip()}", normal_style))
+
+        # Normal text
         else:
-            story.append(Paragraph(plain, normal_style))
+            story.append(Paragraph(line, normal_style))
 
-        story.append(Spacer(1, 5))
+        story.append(Spacer(1, 4))
 
+    # build PDF
     pdf.build(story)
 
     return FileResponse(
@@ -287,13 +244,44 @@ async def download_pdf(run_id: str):
         filename="PRISM_AI_Report.pdf",
         media_type="application/pdf"
     )
+
 # --------------------------------------------------
 # RUN STATUS
 # --------------------------------------------------
 
 @app.get("/runs/{run_id}")
 async def run_status(run_id: str):
+    return {"run": await get_run(run_id)}
+
+
+# --------------------------------------------------
+# ATLAS
+# --------------------------------------------------
+
+@app.post("/atlas")
+async def atlas_index(repo_url: str):
+
+    atlas = ATLAS()
+    atlas.clone_repo(repo_url)
+
+    files = atlas.scan_files()
 
     return {
-        "run": await get_run(run_id)
+        "status": "indexed",
+        "files": len(files),
+        "file_list": files[:10]
     }
+
+
+@app.get("/atlas/read")
+async def atlas_read():
+
+    atlas = ATLAS()
+    return atlas.read_files()
+
+
+@app.get("/atlas/query")
+async def atlas_query(text: str):
+
+    atlas = ATLAS()
+    return atlas.query(text)

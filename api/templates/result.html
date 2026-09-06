@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PRISM Report</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            background:#f4f4f4;
+            padding:40px;
+        }
+
+        .container{
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            box-shadow:0px 0px 10px rgba(0,0,0,0.2);
+        }
+
+        h1{
+            color:#007bff;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🚀 PRISM Analysis Report</h1>
+
+        <p><b>Run ID:</b> {{ run_id }}</p>
+         {{ report | safe }}
+
+
+        <hr>
+
+
+    </div>
+
+</body>
+
+</html>

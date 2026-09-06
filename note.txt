@@ -1,0 +1,9 @@
+Student Management System
+
+The platform includes:
+
+- Login authentication
+- Admin dashboard
+- File upload
+- Report generation
+- Notifications

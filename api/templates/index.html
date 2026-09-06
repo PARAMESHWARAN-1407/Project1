@@ -1,18 +1,252 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRISM AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --bg2: #111827;
+            --card: #121826;
+            --card2: #0f172a;
+            --border: rgba(255,255,255,0.10);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #22c55e;
+            --accent2: #38bdf8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(34,197,94,0.12), transparent 28%),
+                linear-gradient(135deg, #05070b 0%, #0b1220 45%, #05070b 100%);
+            color: var(--text);
+        }
+        .page-wrap { padding: 48px 16px; }
+        .hero {
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            backdrop-filter: blur(10px);
+        }
+        .brand {
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+            background: linear-gradient(90deg, #ffffff 0%, #38bdf8 35%, #22c55e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .subtitle {
+            color: var(--muted);
+            font-size: 16px;
+        }
+        .card-dark {
+            background: linear-gradient(180deg, rgba(18,24,38,0.95), rgba(10,14,22,0.95));
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+        }
+        .form-label { font-weight: 700; color: #f3f4f6; }
+        .form-control, .form-control:focus {
+            background: #0b1220;
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: none;
+        }
+        .form-control::placeholder { color: #6b7280; }
+        .form-text { color: var(--muted); }
+        .btn-analyze {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #22c55e, #38bdf8);
+            color: #04111a;
+            box-shadow: 0 10px 25px rgba(34,197,94,0.18);
+        }
+        .btn-analyze:hover { filter: brightness(1.05); transform: translateY(-1px); }
+        .feature-box {
+            background: rgba(15,23,42,0.85);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 18px;
+        }
+        .feature-box h5 { color: #f8fafc; margin-bottom: 10px; }
+        .pipeline-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .pipeline-list li {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            color: #d1d5db;
+        }
+        .pipeline-list li:last-child { border-bottom: none; }
+        .step-badge {
+            min-width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #06121a;
+            background: linear-gradient(135deg, #22c55e, #38bdf8);
+            box-shadow: 0 8px 20px rgba(56,189,248,0.18);
+        }
+        .step-title { font-weight: 700; color: #ffffff; }
+        .step-desc { color: var(--muted); font-size: 14px; margin-top: 2px; }
+        .pill-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04);
+            color: #e5e7eb;
+            font-size: 13px;
+        }
+        #loading { display:none; margin-top:20px; }
+        .small-note { color: var(--muted); font-size: 13px; }
+    </style>
 </head>
-<body style="text-align:center; margin-top:100px; font-family:Arial;">
+<body>
+    <div class="page-wrap">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-9">
+                    <div class="hero p-4 p-md-5 mb-4">
+                        <div class="text-center mb-4">
+                            <div class="brand">PRISM AI</div>
+                            <div class="subtitle mt-2">AI Feasibility Analysis System</div>
+                            <div class="pill-row justify-content-center mt-4">
+                                <span class="pill">FastAPI</span>
+                                <span class="pill">Jinja2</span>
+                                <span class="pill">SQLite</span>
+                                <span class="pill">Multi-agent pipeline</span>
+                            </div>
+                        </div>
 
-    <h1>PRISM AI Dashboard</h1>
-    <p>Upload your document</p>
+                        <div class="card-dark p-4 p-md-4">
+                            <form id="uploadForm">
+                                <div class="mb-4">
+                                    <label class="form-label">📄 Upload Requirement Document</label>
+                                    <input type="file" class="form-control" id="fileInput" required>
+                                    <div class="form-text mt-2">Supported: .txt .md .pdf .docx</div>
+                                </div>
 
-    <form action="/upload/" enctype="multipart/form-data" method="post">
-        <input type="file" name="file">
-        <br><br>
-        <button type="submit">Upload</button>
-    </form>
+                                <div class="mb-4">
+                                    <label class="form-label">🔗 GitHub Repository URL <span class="small-note">(optional but recommended)</span></label>
+                                    <input type="text" class="form-control" id="repoUrl" placeholder="https://github.com/your-org/project">
+                                </div>
 
+                                <div class="mb-4">
+                                    <label class="form-label">🧠 Custom Instructions <span class="small-note">(optional)</span></label>
+                                    <textarea class="form-control" id="instruction" rows="5" placeholder="Example: Focus only on backend feasibility and highlight security issues."></textarea>
+                                </div>
+
+                                <div class="feature-box mb-4">
+                                    <h5>⚡ PRISM Pipeline</h5>
+                                    <ul class="pipeline-list mt-3">
+                                        <li>
+                                            <span class="step-badge">1</span>
+                                            <div>
+                                                <div class="step-title">PARSE</div>
+                                                <div class="step-desc">Extract features and structure from the uploaded requirement document.</div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span class="step-badge">2</span>
+                                            <div>
+                                                <div class="step-title">ATLAS</div>
+                                                <div class="step-desc">Scan the repository and inspect existing implementation signals.</div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span class="step-badge">3</span>
+                                            <div>
+                                                <div class="step-title">RADAR</div>
+                                                <div class="step-desc">Research practical engineering patterns for the requested features.</div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span class="step-badge">4</span>
+                                            <div>
+                                                <div class="step-title">JUDGE</div>
+                                                <div class="step-desc">Rate feasibility, effort, and risk for each feature.</div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span class="step-badge">5</span>
+                                            <div>
+                                                <div class="step-title">WEAVER</div>
+                                                <div class="step-desc">Generate a clean final report for review and download.</div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <span class="step-badge">6</span>
+                                            <div>
+                                                <div class="step-title">SIREN</div>
+                                                <div class="step-desc">Highlight critical risks that need immediate attention.</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <button type="submit" class="btn btn-analyze">Analyze with PRISM</button>
+
+                                <div id="loading" class="alert alert-warning text-center mt-3">
+                                    ⏳ PRISM is analyzing your project...
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const file = document.getElementById("fileInput").files[0];
+            const repoUrl = document.getElementById("repoUrl").value.trim();
+            const instruction = document.getElementById("instruction").value.trim();
+            if (!file) { alert("Please upload a document"); return; }
+            document.getElementById("loading").style.display = "block";
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("repo_url", repoUrl);
+            formData.append("instruction", instruction);
+            try {
+                const response = await fetch("/analyze", { method: "POST", body: formData });
+                const html = await response.text();
+                document.open();
+                document.write(html);
+                document.close();
+            } catch (error) {
+                alert("PRISM failed to analyze");
+                console.log(error);
+                document.getElementById("loading").style.display = "none";
+            }
+        });
+    </script>
 </body>
 </html>

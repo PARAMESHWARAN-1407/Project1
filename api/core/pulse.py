@@ -1,17 +1,24 @@
-from api.core.state import update_run
-from api.core.parse import parse_document
+from api.core.radar import RADAR
+from api.core.judge import JUDGE
 
 
 class PULSE:
-    async def run(self, run_id, text):
-        await update_run(run_id, "parsing")
+    def __init__(self):
+        self.radar = RADAR()
+        self.judge = JUDGE()
 
-        result = parse_document(text)
+    async def run(self, parsed_data):
+        print("PULSE started")
 
-        await update_run(
-            run_id,
-            "completed",
-            str(result)
-        )
+        # RADAR (sync call)
+        research = self.radar.research(parsed_data)
+        print("RADAR completed")
 
-        return result
+        # JUDGE (sync or async safe)
+        decision = self.judge.evaluate(parsed_data, research)
+        print("JUDGE completed")
+
+        return {
+            "radar": research,
+            "judge": decision
+        }

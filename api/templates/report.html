@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRISM Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #070b10;
+            --panel: #0f172a;
+            --panel2: #111827;
+            --border: rgba(255,255,255,0.10);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #38bdf8;
+            --accent2: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(34,197,94,0.12), transparent 28%),
+                linear-gradient(135deg, #04070b 0%, #0a1220 50%, #04070b 100%);
+            color: var(--text);
+            padding: 36px 0;
+        }
+        .report-shell {
+            background: linear-gradient(180deg, rgba(17,24,39,0.92), rgba(9,14,22,0.92));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 22px 60px rgba(0,0,0,0.45);
+            overflow: hidden;
+        }
+        .report-header {
+            padding: 28px 28px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(90deg, rgba(56,189,248,0.12), rgba(34,197,94,0.10));
+        }
+        .title {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(90deg, #ffffff, #38bdf8, #22c55e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .meta-card {
+            background: rgba(15,23,42,0.85);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 14px 16px;
+        }
+        .meta-label { color: var(--muted); font-size: 13px; }
+        .meta-value { color: #fff; font-weight: 700; margin-top: 4px; word-break: break-word; }
+        .content { padding: 28px; }
+        .section-card {
+            background: rgba(15,23,42,0.88);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+        h1, h2, h3, h4 { color: #f8fafc; }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        p, li, td { color: #d1d5db; }
+        ul, ol { padding-left: 1.2rem; }
+        ul li, ol li { margin-bottom: 10px; }
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+            display: grid;
+            gap: 12px;
+        }
+        .feature-list li {
+            position: relative;
+            padding: 14px 16px 14px 48px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            color: #e5e7eb;
+        }
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #22c55e, #38bdf8);
+            color: #04111a;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .analysis-box {
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+        }
+        .analysis-head {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .feature-name { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0; }
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+        }
+        .risk-low { background: rgba(34,197,94,0.16); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+        .risk-medium { background: rgba(245,158,11,0.16); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+        .risk-high { background: rgba(239,68,68,0.16); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+        .yes-pill { background: rgba(34,197,94,0.16); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            vertical-align: top;
+        }
+        th {
+            background: rgba(56,189,248,0.10);
+            color: #f8fafc;
+            font-weight: 800;
+        }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .summary-box {
+            background: linear-gradient(180deg, rgba(34,197,94,0.12), rgba(56,189,248,0.08));
+            border-left: 5px solid #22c55e;
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #22c55e, #38bdf8);
+            color: #04111a;
+            text-decoration: none;
+            font-weight: 800;
+            border: none;
+        }
+        .link-btn:hover { color: #04111a; filter: brightness(1.05); }
+        .footer-note {
+            color: var(--muted);
+            text-align: center;
+            padding: 18px 0 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="report-shell">
+            <div class="report-header">
+                <h1 class="title">PRISM Analysis Report</h1>
+                <div class="meta-grid">
+                    <div class="meta-card">
+                        <div class="meta-label">Run ID</div>
+                        <div class="meta-value">{{ run_id }}</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Project Title</div>
+                        <div class="meta-value">{{ parsed.title if parsed else 'Unknown Project' }}</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">High Risk Items</div>
+                        <div class="meta-value">{{ high_risk }}</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Medium Risk Items</div>
+                        <div class="meta-value">{{ medium_risk }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                {% if repo %}
+                <div class="section-card">
+                    <h2>Repository Context</h2>
+                    <p><b>URL:</b> {{ repo.repo_url }}</p>
+                    <p><b>Status:</b> {{ repo.status }}</p>
+                </div>
+                {% endif %}
+
+                {% if instruction %}
+                <div class="section-card">
+                    <h2>Custom Instruction</h2>
+                    <p>{{ instruction }}</p>
+                </div>
+                {% endif %}
+
+                {% if alerts and alerts|length > 0 %}
+                <div class="section-card">
+                    <h2>Critical Alerts</h2>
+                    <ul class="feature-list">
+                        {% for alert in alerts %}
+                        <li>
+                            <b>{{ alert.feature }}</b> — {{ alert.reason }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="section-card">
+                    <h2>Executive Summary</h2>
+                    <p>PRISM analyzed the uploaded project specification and evaluated technical feasibility, architecture complexity, implementation effort, and risk patterns.</p>
+                    {% if parsed and parsed.features %}
+                    <ul class="feature-list mt-3">
+                        {% for item in parsed.features[:6] %}
+                        <li>{{ item.name }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <div class="section-card">
+                    <h2>Feature Feasibility Analysis</h2>
+                    {% for item in judge %}
+                    <div class="analysis-box">
+                        <div class="analysis-head">
+                            <p class="feature-name">Feature {{ loop.index }}: {{ item.feature_name }}</p>
+                            <span class="badge-pill yes-pill">{{ item.feasible }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {% if item.risk == 'low' %}
+                            <span class="badge-pill risk-low">Risk: {{ item.risk }}</span>
+                            {% elif item.risk == 'medium' %}
+                            <span class="badge-pill risk-medium">Risk: {{ item.risk }}</span>
+                            {% else %}
+                            <span class="badge-pill risk-high">Risk: {{ item.risk }}</span>
+                            {% endif %}
+                            <span class="badge-pill yes-pill">Effort: {{ item.effort }}</span>
+                        </div>
+                        <div>
+                            <h4 class="mb-2">Key Considerations</h4>
+                            <ul class="feature-list">
+                                {% if item.reasons %}
+                                    {% for reason in item.reasons %}
+                                    <li>{{ reason }}</li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li>No major technical risks detected.</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="section-card">
+                    <h2>Recommended Engineering Patterns</h2>
+                    {% for pattern in radar.patterns %}
+                    <div class="analysis-box">
+                        <h4 class="mb-3">{{ pattern.topic }}</h4>
+                        <p><b>Recommended Approach:</b> {{ pattern.approach }}</p>
+                        <p><b>Implementation Notes:</b> {{ pattern.notes }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="section-card">
+                    <h2>Effort & Risk Matrix</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Feasible</th>
+                                    <th>Risk</th>
+                                    <th>Effort</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in judge %}
+                                <tr>
+                                    <td>{{ item.feature_name }}</td>
+                                    <td>{{ item.feasible }}</td>
+                                    <td>{{ item.risk }}</td>
+                                    <td>{{ item.effort }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-card summary-box">
+                    <h2>Final Technical Conclusion</h2>
+                    <p>The proposed system is technically feasible and can be implemented successfully using a modular FastAPI architecture.</p>
+                    <h4 class="mt-3 mb-2">Recommended Development Roadmap</h4>
+                    <ol>
+                        <li>Implement authentication and authorization system.</li>
+                        <li>Build core dashboard modules.</li>
+                        <li>Develop file and document management.</li>
+                        <li>Integrate analytics and reporting.</li>
+                        <li>Implement payment gateway in final phase.</li>
+                        <li>Perform security hardening and testing.</li>
+                    </ol>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mt-4">
+                    <a href="/" class="link-btn">← Back to Home</a>
+                    <a href="/pdf/{{ run_id }}" class="link-btn">Download PDF</a>
+                </div>
+
+                <div class="footer-note">Generated by PRISM AI Analysis Engine</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

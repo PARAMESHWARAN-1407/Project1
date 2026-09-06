@@ -1,0 +1,1 @@
+in the application we have option to get the hospitals near me or need to update  my location in those places currently mockedvalues are there instead of i need dynamic current live location.
